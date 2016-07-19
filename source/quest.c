@@ -204,7 +204,7 @@ void import_quests() {
     FS_Archive extdata;
     Handle system;
     ui_info_clear();
-    int game = select_game("Select the game to export quests from...", "Selected game...", &extdata, &system, 1);
+    int game = select_game("Select the game to import quests into...", "Selected game...", &extdata, &system, 1);
     if ((game == -1) || !ui_confirm("Are you sure you want to overwrite the quests?"))
         return;
     if (game == 0)
