@@ -1,0 +1,13 @@
+This homebrew can be used to copy characters between different regions of the
+Monster Hunter X games, backup/restore your save and import/export quests from
+your save.
+
+WARNING: This hasn't been extensively tested yet, always make a backup of your
+save file before messing with it.
+
+You can report issues, get the latest version, and view the source at:
+  https://github.com/svanheulen/mhx_data_manager
+
+A compiled version can be found at:
+  https://github.com/svanheulen/mhx_data_manager/releases
+
