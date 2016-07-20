@@ -275,9 +275,11 @@ void delete_quests() {
     Handle system;
     ui_info_clear();
     int game = select_game("Select the game to delete quests from...", "Selected game...", &extdata, &system, 1);
-    if ((game == -1) || !ui_confirm("Are you sure you want to delete all quests from\nthis game's save file?\n\n(See bottom screen for selected game)"))
+    if (game == -1)
         return;
-    clear(system);
+    if (ui_confirm("Are you sure you want to delete all quests from\nthis game's save file?\n\n(See bottom screen for selected game)"))
+        clear(system);
     FSFILE_Close(system);
     FSUSER_CloseArchive(extdata);
 }
+
