@@ -26,7 +26,7 @@ void ui_init() {
     consoleInit(GFX_BOTTOM, &bottom_screen);
 }
 
-int ui_menu(const char* description, ui_menu_entry * menu, int menu_length) {
+int ui_menu(const char* description, ui_menu_entry* menu, int menu_length) {
     int selected;
     for (selected = 0; selected < menu_length; selected++) {
         if (menu[selected].enabled)

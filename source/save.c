@@ -113,6 +113,7 @@ void restore_save() {
         FSUSER_CloseArchive(extdata);
         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to read backup save file");
+        return;
     }
     fclose(backup);
     ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
