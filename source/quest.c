@@ -95,44 +95,53 @@ void get_bits(int* bits, int* ids) {
 void extract(Handle system, const char* export_path, int large) {
     ui_info_add("Exporting quests ...\n");
     int section_offset;
-    FSFILE_Read(system, NULL, 0xc, &section_offset, 4); // error check
+    if (FSFILE_Read(system, NULL, 0xc, &section_offset, 4) != 0) {
+        ui_info_add("Failed.\n");
+        ui_pause("Error: Unable to read DLC section offset");
+        return;
+    }
     int installed_bits[5];
-    FSFILE_Read(system, NULL, section_offset + INSTALLED_OFFSET, installed_bits, 20); // error check
+    if (FSFILE_Read(system, NULL, section_offset + INSTALLED_OFFSET, installed_bits, 20) != 0) {
+        ui_info_add("Failed.\n");
+        ui_pause("Error: Unable to read installed quests info");
+        return;
+    }
     int installed_ids[140];
     get_ids(installed_bits, installed_ids);
     int quest_offset = section_offset + QUEST_OFFSET;
-    int quest_id;
-    int quest_size;
+    int quest_info[2];
     char quest_data[QUEST_SIZE_LARGE];
     char file_name[50];
-    FILE * export;
+    FILE* export;
     for (int i = 0; i < 140; i++) {
-        FSFILE_Read(system, NULL, quest_offset, &quest_id, 4); // error check
-        FSFILE_Read(system, NULL, quest_offset + 4, &quest_size, 4); // error check
+        // silent error
+        if (FSFILE_Read(system, NULL, quest_offset, quest_info, 8) != 0) {
+            quest_offset += large ? QUEST_SIZE_LARGE : QUEST_SIZE_SMALL;
+            continue;
+        }
         int skip;
         for (skip = 0; skip < 140; skip++) {
-            if (quest_id == installed_ids[skip])
+            if (quest_info[0] == installed_ids[skip])
                 break;
         }
-        if ((quest_id != 0) && (skip != 140)) {
-            sprintf(file_name, "%s/q%07d.arc", export_path, quest_id);
-            FSFILE_Read(system, NULL, quest_offset + 8, quest_data, quest_size); // error check
+        // silent error
+        if ((quest_info[0] != 0) && (skip != 140) && (FSFILE_Read(system, NULL, quest_offset + 8, quest_data, quest_info[1]) == 0)) {
+            sprintf(file_name, "%s/q%07d.arc", export_path, quest_info[0]); // snprintf
             ui_info_add("  ");
             ui_info_add(file_name);
             ui_info_add(" ... ");
             export = fopen(file_name, "wb");
             if (export != NULL) {
-                fwrite(quest_data, 1, quest_size, export); // error check
+                if (fwrite(quest_data, 1, quest_info[1], export) == quest_info[1])
+                    ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
+                else
+                    ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
                 fclose(export);
-                ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
             } else {
                 ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
             }
         }
-        if (large)
-            quest_offset += QUEST_SIZE_LARGE;
-        else
-            quest_offset += QUEST_SIZE_SMALL;
+        quest_offset += large ? QUEST_SIZE_LARGE : QUEST_SIZE_SMALL;
     }
     ui_info_add("Complete.\n");
 }
@@ -140,40 +149,59 @@ void extract(Handle system, const char* export_path, int large) {
 void inject(Handle system, const char* import_path, int large) {
     ui_info_add("Importing quests ...\n");
     int section_offset;
-    FSFILE_Read(system, NULL, 0xc, &section_offset, 4); // error check
+    if (FSFILE_Read(system, NULL, 0xc, &section_offset, 4) != 0) {
+        ui_info_add("Failed.\n");
+        ui_pause("Error: Unable to read DLC section offset");
+        return;
+    }
     int installed_bits[5];
-    FSFILE_Read(system, NULL, section_offset + INSTALLED_OFFSET, installed_bits, 20); // error check
+    if (FSFILE_Read(system, NULL, section_offset + INSTALLED_OFFSET, installed_bits, 20) != 0) {
+        ui_info_add("Failed.\n");
+        ui_pause("Error: Unable to read installed quests info");
+        return;
+    }
     int installed_ids[140];
     get_ids(installed_bits, installed_ids);
     int file_ids[140];
     find_file_ids(file_ids, import_path);
     int quest_offset = section_offset + QUEST_OFFSET;
-    int quest_id;
-    int quest_size;
+    int quest_info[2];
     char quest_data[QUEST_SIZE_LARGE];
     char file_name[50];
-    FILE * import;
+    FILE* import;
     for (int i = 0; i < 140; i++) {
-        FSFILE_Read(system, NULL, quest_offset, &quest_id, 4); // error check
+        // silent error
+        if (FSFILE_Read(system, NULL, quest_offset, quest_info, 4) != 0) {
+            quest_offset += large ? QUEST_SIZE_LARGE : QUEST_SIZE_SMALL;
+            continue;
+        }
         for (int j = 0; j < 140; j++) {
-            int check = quest_id != 0 && file_ids[j] == quest_id;
-            check = check || (quest_id == 0 && file_ids[j] != 0 && i < 120 && ((file_ids[j] > 1010000 && file_ids[j] < 1020000) || (file_ids[j] > 1110000 && file_ids[j] < 1120000)));
-            check = check || (quest_id == 0 && file_ids[j] != 0 && i >= 120 && ((file_ids[j] > 1020000 && file_ids[j] < 1110000) || file_ids[j] > 1120000));
+            int check = quest_info[0] != 0 && file_ids[j] == quest_info[0];
+            check = check || (quest_info[0] == 0 && file_ids[j] != 0 && i < 120 && ((file_ids[j] > 1010000 && file_ids[j] < 1020000) || (file_ids[j] > 1110000 && file_ids[j] < 1120000)));
+            check = check || (quest_info[0] == 0 && file_ids[j] != 0 && i >= 120 && ((file_ids[j] > 1020000 && file_ids[j] < 1110000) || file_ids[j] > 1120000));
             if (check) {
-                sprintf(file_name, "%s/q%07d.arc", import_path, file_ids[j]);
+                sprintf(file_name, "%s/q%07d.arc", import_path, quest_info[0]); // snprintf
                 ui_info_add("  ");
                 ui_info_add(file_name);
                 ui_info_add(" ... ");
                 import = fopen(file_name, "rb");
                 if (import != NULL) {
-                    quest_size = fread(quest_data, 1, QUEST_SIZE_LARGE, import); // error check
+                    quest_info[1] = fread(quest_data, 1, QUEST_SIZE_LARGE, import);
+                    if (ferror(import) || (quest_info[1] + 8) > (large ? QUEST_SIZE_LARGE : QUEST_SIZE_SMALL)) {
+                        fclose(import);
+                        file_ids[j] = 0;
+                        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+                        break;
+                    }
                     fclose(import);
-                    // make sure quest fits
-                    FSFILE_Write(system, NULL, quest_offset, &file_ids[j], 4, FS_WRITE_FLUSH); // error check
-                    FSFILE_Write(system, NULL, quest_offset + 4, &quest_size, 4, FS_WRITE_FLUSH); // error check
-                    FSFILE_Write(system, NULL, quest_offset + 8, quest_data, quest_size, FS_WRITE_FLUSH); // error check
-                    installed_ids[j] = file_ids[j];
-                    ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
+                    if (FSFILE_Write(system, NULL, quest_offset, quest_info, 8, FS_WRITE_FLUSH) != 0) {
+                        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+                    } else if (FSFILE_Write(system, NULL, quest_offset + 8, quest_data, quest_info[1], FS_WRITE_FLUSH) != 0) {
+                        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+                    } else {
+                        installed_ids[j] = quest_info[0];
+                        ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
+                    }
                 } else {
                     ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
                 }
@@ -181,13 +209,14 @@ void inject(Handle system, const char* import_path, int large) {
                 break;
             }
         }
-        if (large)
-            quest_offset += QUEST_SIZE_LARGE;
-        else
-            quest_offset += QUEST_SIZE_SMALL;
+        quest_offset += large ? QUEST_SIZE_LARGE : QUEST_SIZE_SMALL;
     }
     get_bits(installed_bits, installed_ids);
-    FSFILE_Write(system, NULL, section_offset + 0x34, installed_bits, 20, FS_WRITE_FLUSH); // error check
+    if (FSFILE_Write(system, NULL, section_offset + 0x34, installed_bits, 20, FS_WRITE_FLUSH) != 0) {
+        ui_info_add("Failed.\n");
+        ui_pause("Error: Unable to write installed quests info");
+        return;
+    }
     ui_info_add("Complete.\n");
 }
 
