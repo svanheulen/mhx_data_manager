@@ -23,44 +23,59 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SLOT_SIZE 0xEAD6E
 
 int read_slot(Handle system, int slot, char* slot_data) {
+    ui_info_add("Reading character ... ");
+    if (slot_data == NULL) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to allocate memory for character\ndata");
+        return 0;
+    }
     int slot_offset;
     if (FSFILE_Read(system, NULL, 0x10 + slot * 4, &slot_offset, 4) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to read character data offset");
         return 0;
     }
     if (FSFILE_Read(system, NULL, slot_offset, slot_data, SLOT_SIZE) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to read character data");
         return 0;
     }
+    ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
     return 1;
 }
 
 int write_slot(Handle system, int slot, char* slot_data) {
+    ui_info_add("Writing character ... ");
     int slot_offset;
     if (FSFILE_Read(system, NULL, 0x10 + slot * 4, &slot_offset, 4) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to read character data offset");
         return 0;
     }
     if (FSFILE_Write(system, NULL, slot_offset, slot_data, SLOT_SIZE, FS_WRITE_FLUSH) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to write character data");
         return 0;
     }
     char one = 1;
     if (FSFILE_Write(system, NULL, 4 + slot, &one, 1, FS_WRITE_FLUSH) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to write character slot info");
         return 0;
     }
-    ui_info_add("Character data successfully writen.\n");
+    ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
     return 1;
 }
 
 int delete_slot(Handle system, int slot) {
+    ui_info_add("Deleting character ... ");
     char zero = 0;
     if (FSFILE_Write(system, NULL, 4 + slot, &zero, 1, FS_WRITE_FLUSH) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to write character slot info");
         return 0;
     }
-    ui_info_add("Character data successfully deleted.");
+    ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
     return 1;
 }
 
@@ -101,7 +116,7 @@ void copy_character() {
         FSUSER_CloseArchive(extdata);
         return;
     }
-    char* slot_data = malloc(SLOT_SIZE); // error check
+    char* slot_data = malloc(SLOT_SIZE);
     if (read_slot(system, slot, slot_data)) {
         FSFILE_Close(system);
         FSUSER_CloseArchive(extdata);
@@ -123,7 +138,8 @@ void copy_character() {
         FSUSER_CloseArchive(extdata);
         return;
     }
-    write_slot(system, slot, slot_data);
+    if (ui_confirm("Are you sure you want to overwrite this character\nin this game's save file?\n\n(See bottom screen for selected game/character)"))
+        write_slot(system, slot, slot_data);
     free(slot_data);
     FSFILE_Close(system);
     FSUSER_CloseArchive(extdata);
@@ -142,7 +158,7 @@ void delete_character() {
         FSUSER_CloseArchive(extdata);
         return;
     }
-    if (ui_confirm("Are you sure you want to delete this character?"))
+    if (ui_confirm("Are you sure you want to delete this character\nfrom this game's save file?\n\n(See bottom screen for selected game/character)"))
         delete_slot(system, slot);
     FSFILE_Close(system);
     FSUSER_CloseArchive(extdata);

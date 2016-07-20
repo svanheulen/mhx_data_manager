@@ -44,7 +44,7 @@ int select_game(const char* description, const char* info, FS_Archive* extdata, 
         flags = FS_OPEN_WRITE;
     if (FSUSER_OpenFile(system, *extdata, fsMakePath(PATH_ASCII, "/system"), flags, 0) != 0) {
         FSUSER_CloseArchive(*extdata);
-        ui_pause("Error: Unable to open exdata:/system");
+        ui_pause("Error: Unable to open extdata:/system");
         return -1;
     }
     ui_info_add(info);

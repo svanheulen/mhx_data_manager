@@ -28,25 +28,30 @@ void backup_save() {
     FS_Archive extdata;
     Handle system;
     ui_info_clear();
-    int game = select_game("Select the game to backup your save from...", "Selected game...", &extdata, &system, 0);
+    int game = select_game("Select the game to backup your save file from...", "Selected game...", &extdata, &system, 0);
     if (game == -1)
         return;
     char* system_data = malloc(SYSTEM_SIZE_LARGE);
+    ui_info_add("Reading save file ... ");
     if (system_data == NULL) {
         FSFILE_Close(system);
         FSUSER_CloseArchive(extdata);
-        ui_pause("Error: Unable to allocate memory for save");
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to allocate memory for save file");
         return;
     }
     u32 system_data_size = 0;
     if (FSFILE_Read(system, &system_data_size, 0, system_data, SYSTEM_SIZE_LARGE) != 0) {
         FSFILE_Close(system);
         FSUSER_CloseArchive(extdata);
-        ui_pause("Error: Unable to read save");
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to read save file");
         return;
     }
     FSFILE_Close(system);
     FSUSER_CloseArchive(extdata);
+    ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
+    ui_info_add("Writing backup save file ... ");
     FILE* backup = NULL;
     if (game == 0)
         backup = fopen("save/jpn/system", "wb");
@@ -56,13 +61,16 @@ void backup_save() {
         backup = fopen("save/usa/system", "wb");
     if (backup == NULL) {
         free(system_data);
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to open backup save file");
         return;
     }
-    if (fwrite(system_data, 1, system_data_size, backup) != system_data_size)
-        ui_pause("Error: Unable to write entire save to file");
-    else
-        ui_info_add("Save successfully backed up.");
+    if (fwrite(system_data, 1, system_data_size, backup) != system_data_size) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to write entire backup save file");
+    } else {
+        ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
+    }
     fclose(backup);
     free(system_data);
 }
@@ -71,9 +79,10 @@ void restore_save() {
     FS_Archive extdata;
     Handle system;
     ui_info_clear();
-    int game = select_game("Select the game to restore your save to...", "Selected game...", &extdata, &system, 1);
-    if ((game == -1) || !ui_confirm("Are you sure you want to overwrite this save?"))
+    int game = select_game("Select the game to restore your backup save file\nto...", "Selected game...", &extdata, &system, 1);
+    if ((game == -1) || !ui_confirm("Are you sure you want to overwrite this game's\nsave file?\n\n(See bottom screen for selected game)"))
         return;
+    ui_info_add("Reading backup save file ... ");
     FILE* backup = NULL;
     if (game == 0)
         backup = fopen("save/jpn/system", "rb");
@@ -84,6 +93,7 @@ void restore_save() {
     if (backup == NULL) {
         FSFILE_Close(system);
         FSUSER_CloseArchive(extdata);
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to open backup save file");
         return;
     }
@@ -91,7 +101,8 @@ void restore_save() {
     if (system_data == NULL) {
         FSFILE_Close(system);
         FSUSER_CloseArchive(extdata);
-        ui_pause("Error: Unable to allocate memory for save");
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to allocate memory for backup save\nfile");
         return;
     }
     int system_data_size = fread(system_data, 1, SYSTEM_SIZE_LARGE, backup);
@@ -100,13 +111,18 @@ void restore_save() {
         fclose(backup);
         FSFILE_Close(system);
         FSUSER_CloseArchive(extdata);
-        ui_pause("Error: Unable to read backup save");
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to read backup save file");
     }
     fclose(backup);
-    if (FSFILE_Write(system, NULL, 0, system_data, system_data_size, FS_WRITE_FLUSH) != 0)
-        ui_pause("Error: Unable to write save");
-    else
-        ui_info_add("Save successfully restored.");
+    ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
+    ui_info_add("Writing save file ... ");
+    if (FSFILE_Write(system, NULL, 0, system_data, system_data_size, FS_WRITE_FLUSH) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to write save file");
+    } else {
+        ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
+    }
     free(system_data);
     FSFILE_Close(system);
     FSUSER_CloseArchive(extdata);

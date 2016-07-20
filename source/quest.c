@@ -93,10 +93,13 @@ void get_bits(int* bits, int* ids) {
 }
 
 void extract(Handle system, const char* export_path, int large) {
-    // only extract installed quests
     ui_info_add("Exporting quests ...\n");
     int section_offset;
     FSFILE_Read(system, NULL, 0xc, &section_offset, 4); // error check
+    int installed_bits[5];
+    FSFILE_Read(system, NULL, section_offset + INSTALLED_OFFSET, installed_bits, 20); // error check
+    int installed_ids[140];
+    get_ids(installed_bits, installed_ids);
     int quest_offset = section_offset + QUEST_OFFSET;
     int quest_id;
     int quest_size;
@@ -106,7 +109,12 @@ void extract(Handle system, const char* export_path, int large) {
     for (int i = 0; i < 140; i++) {
         FSFILE_Read(system, NULL, quest_offset, &quest_id, 4); // error check
         FSFILE_Read(system, NULL, quest_offset + 4, &quest_size, 4); // error check
-        if (quest_id != 0) {
+        int skip;
+        for (skip = 0; skip < 140; skip++) {
+            if (quest_id == installed_ids[skip])
+                break;
+        }
+        if ((quest_id != 0) && (skip != 140)) {
             sprintf(file_name, "%s/q%07d.arc", export_path, quest_id);
             FSFILE_Read(system, NULL, quest_offset + 8, quest_data, quest_size); // error check
             ui_info_add("  ");
@@ -183,6 +191,22 @@ void inject(Handle system, const char* import_path, int large) {
     ui_info_add("Complete.\n");
 }
 
+int clear(Handle system) {
+    ui_info_add("Deleting quests ... ");
+    int section_offset;
+    if (FSFILE_Read(system, NULL, 0xc, &section_offset, 4) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        return 0;
+    }
+    int installed_bits[] = {0, 0, 0, 0, 0};
+    if (FSFILE_Write(system, NULL, section_offset + INSTALLED_OFFSET, installed_bits, 20, FS_WRITE_FLUSH) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        return 0;
+    }
+    ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
+    return 1;
+}
+
 void export_quests() {
     FS_Archive extdata;
     Handle system;
@@ -205,7 +229,7 @@ void import_quests() {
     Handle system;
     ui_info_clear();
     int game = select_game("Select the game to import quests into...", "Selected game...", &extdata, &system, 1);
-    if ((game == -1) || !ui_confirm("Are you sure you want to overwrite the quests?"))
+    if ((game == -1) || !ui_confirm("Any quest in your save file with the same ID as\nan imported quest will be overwritten. Are you\nsure you want to import quests into this game's\nsave file?\n\n(See bottom screen for selected game)"))
         return;
     if (game == 0)
         inject(system, "quest/jpn", 0);
@@ -217,3 +241,14 @@ void import_quests() {
     FSUSER_CloseArchive(extdata);
 }
 
+void delete_quests() {
+    FS_Archive extdata;
+    Handle system;
+    ui_info_clear();
+    int game = select_game("Select the game to delete quests from...", "Selected game...", &extdata, &system, 1);
+    if ((game == -1) || !ui_confirm("Are you sure you want to delete all quests from\nthis game's save file?\n\n(See bottom screen for selected game)"))
+        return;
+    clear(system);
+    FSFILE_Close(system);
+    FSUSER_CloseArchive(extdata);
+}

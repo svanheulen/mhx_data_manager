@@ -29,11 +29,12 @@ int main(int argc, char* argv[]) {
         {"Delete Character", 1},
         {"Export Quests", 1},
         {"Import Quests", 1},
+        {"Delete Quests", 1},
         {"Backup Save", 1},
         {"Restore Save", 1},
     };
     while (aptMainLoop()) {
-        int task = ui_menu("Monster Hunter X Data Manager\n\nSelect a task...", main_menu, 6);
+        int task = ui_menu("\x1b[32;1mMonster Hunter X Data Manager\n\n\x1b[31;1mAlways keep a good backup of your save file!\x1b[0m\n\nSelect a task...", main_menu, 7);
         if (task == 0)
             copy_character();
         else if (task == 1)
@@ -43,8 +44,10 @@ int main(int argc, char* argv[]) {
         else if (task == 3)
             import_quests();
         else if (task == 4)
-            backup_save();
+            delete_quests();
         else if (task == 5)
+            backup_save();
+        else if (task == 6)
             restore_save();
         else
             break;

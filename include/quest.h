@@ -17,4 +17,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void export_quests();
 void import_quests();
+void delete_quests();
 
