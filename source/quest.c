@@ -180,7 +180,7 @@ void inject(Handle system, const char* import_path, int large) {
             check = check || (quest_info[0] == 0 && file_ids[j] != 0 && i < 120 && ((file_ids[j] > 1010000 && file_ids[j] < 1020000) || (file_ids[j] > 1110000 && file_ids[j] < 1120000)));
             check = check || (quest_info[0] == 0 && file_ids[j] != 0 && i >= 120 && ((file_ids[j] > 1020000 && file_ids[j] < 1110000) || file_ids[j] > 1120000));
             if (check) {
-                sprintf(file_name, "%s/q%07d.arc", import_path, file_ids[0]); // snprintf
+                sprintf(file_name, "%s/q%07d.arc", import_path, file_ids[j]); // snprintf
                 ui_info_add("  ");
                 ui_info_add(file_name);
                 ui_info_add(" ... ");
@@ -199,7 +199,7 @@ void inject(Handle system, const char* import_path, int large) {
                     } else if (FSFILE_Write(system, NULL, quest_offset + 8, quest_data, quest_info[1], FS_WRITE_FLUSH) != 0) {
                         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
                     } else {
-                        installed_ids[j] = file_ids[0];
+                        installed_ids[j] = file_ids[j];
                         ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
                     }
                 } else {
