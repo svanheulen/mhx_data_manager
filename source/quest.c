@@ -194,6 +194,7 @@ void inject(Handle system, const char* import_path, int large) {
                         break;
                     }
                     fclose(import);
+                    quest_info[0] = file_ids[j];
                     if (FSFILE_Write(system, NULL, quest_offset, quest_info, 8, FS_WRITE_FLUSH) != 0) {
                         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
                     } else if (FSFILE_Write(system, NULL, quest_offset + 8, quest_data, quest_info[1], FS_WRITE_FLUSH) != 0) {
@@ -212,7 +213,7 @@ void inject(Handle system, const char* import_path, int large) {
         quest_offset += large ? QUEST_SIZE_LARGE : QUEST_SIZE_SMALL;
     }
     get_bits(installed_bits, installed_ids);
-    if (FSFILE_Write(system, NULL, section_offset + 0x34, installed_bits, 20, FS_WRITE_FLUSH) != 0) {
+    if (FSFILE_Write(system, NULL, section_offset + INSTALLED_OFFSET, installed_bits, 20, FS_WRITE_FLUSH) != 0) {
         ui_info_add("Failed.\n");
         ui_pause("Error: Unable to write installed quests info");
         return;
