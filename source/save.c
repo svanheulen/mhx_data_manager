@@ -54,11 +54,11 @@ void backup_save() {
     ui_info_add("Writing backup save file ... ");
     FILE* backup = NULL;
     if (game == 0)
-        backup = fopen("save/jpn/system", "wb");
+        backup = fopen("save/system_jpn.bin", "wb");
     else if (game == 1)
-        backup = fopen("save/eur/system", "wb");
+        backup = fopen("save/system_eur.bin", "wb");
     else if (game == 2)
-        backup = fopen("save/usa/system", "wb");
+        backup = fopen("save/system_usa.bin", "wb");
     if (backup == NULL) {
         free(system_data);
         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
@@ -85,11 +85,11 @@ void restore_save() {
     ui_info_add("Reading backup save file ... ");
     FILE* backup = NULL;
     if (game == 0)
-        backup = fopen("save/jpn/system", "rb");
+        backup = fopen("save/system_jpn.bin", "rb");
     else if (game == 1)
-        backup = fopen("save/eur/system", "rb");
+        backup = fopen("save/system_eur.bin", "rb");
     else if (game == 2)
-        backup = fopen("save/usa/system", "rb");
+        backup = fopen("save/system_usa.bin", "rb");
     if (backup == NULL) {
         FSFILE_Close(system);
         FSUSER_CloseArchive(extdata);
