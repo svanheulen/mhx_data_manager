@@ -115,7 +115,6 @@ int initialize_post_data(char* post_data, char* common_key) {
     }
     int ret = 0;
     char buffer[0x198] = {0};
-    //memset(buffer, 0, 0x198);
     int friend_key = frduGetMyFriendKey();
     if (friend_key == 0) {
         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");

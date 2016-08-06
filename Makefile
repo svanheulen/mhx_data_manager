@@ -34,8 +34,9 @@ DATA		:=	data
 INCLUDES	:=	include
 #ROMFS		:=	romfs
 APP_TITLE	:=	MHX Data Manager
-APP_DESCRIPTION	:=	Copy characters, backup saves and import/export quests.
+APP_DESCRIPTION	:=	Manage saves, characters, and quests.
 APP_AUTHOR	:=	svanheulen
+ICON		:=	meta/icon.png
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -141,7 +142,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf $(OUTPUT).cia banner.bnr icon.icn
 
 
 #---------------------------------------------------------------------------------
@@ -153,12 +154,21 @@ DEPENDS	:=	$(OFILES:.o=.d)
 # main targets
 #---------------------------------------------------------------------------------
 ifeq ($(strip $(NO_SMDH)),)
-$(OUTPUT).3dsx	:	$(OUTPUT).elf $(OUTPUT).smdh
+$(OUTPUT).3dsx	:	$(OUTPUT).elf $(OUTPUT).smdh $(OUTPUT).cia
 else
 $(OUTPUT).3dsx	:	$(OUTPUT).elf
 endif
 
 $(OUTPUT).elf	:	$(OFILES)
+
+$(TOPDIR)/icon.icn :	$(APP_ICON)
+	@bannertool makesmdh -i "$(APP_ICON)" -o "$@" -s "$(APP_TITLE)" -l "$(APP_DESCRIPTION)" -p "$(APP_AUTHOR)"
+
+$(TOPDIR)/banner.bnr :	$(TOPDIR)/meta/banner.png $(TOPDIR)/meta/banner.wav
+	@bannertool makebanner -i $(TOPDIR)/meta/banner.png -a $(TOPDIR)/meta/banner.wav -o "$@"
+
+$(OUTPUT).cia	:	$(OUTPUT).elf $(TOPDIR)/icon.icn $(TOPDIR)/banner.bnr
+	@makerom -f cia -o "$@" -elf $(OUTPUT).elf -rsf $(TOPDIR)/meta/cia.rsf -icon $(TOPDIR)/icon.icn -banner $(TOPDIR)/banner.bnr -exefslogo
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
