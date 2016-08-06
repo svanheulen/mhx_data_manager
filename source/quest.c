@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <3ds.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include "common.h"
 #include "ui.h"
@@ -111,7 +112,7 @@ void extract(Handle system, const char* export_path, int large) {
     int quest_offset = section_offset + QUEST_OFFSET;
     int quest_info[2];
     char quest_data[QUEST_SIZE_LARGE];
-    char file_name[50];
+    char file_name[0x100];
     FILE* export;
     for (int i = 0; i < 140; i++) {
         // silent error
@@ -128,7 +129,7 @@ void extract(Handle system, const char* export_path, int large) {
         if ((quest_info[0] != 0) && (skip != 140) && (FSFILE_Read(system, NULL, quest_offset + 8, quest_data, quest_info[1]) == 0)) {
             sprintf(file_name, "%s/q%07d.arc", export_path, quest_info[0]); // snprintf
             ui_info_add("  ");
-            ui_info_add(file_name);
+            ui_info_add(strrchr(file_name, '/') - 3); // ... hacky
             ui_info_add(" ... ");
             export = fopen(file_name, "wb");
             if (export != NULL) {
@@ -167,7 +168,7 @@ void inject(Handle system, const char* import_path, int large) {
     int quest_offset = section_offset + QUEST_OFFSET;
     int quest_info[2];
     char quest_data[QUEST_SIZE_LARGE];
-    char file_name[50];
+    char file_name[0x100];
     FILE* import;
     for (int i = 0; i < 140; i++) {
         // silent error
@@ -182,7 +183,7 @@ void inject(Handle system, const char* import_path, int large) {
             if (check) {
                 sprintf(file_name, "%s/q%07d.arc", import_path, file_ids[j]); // snprintf
                 ui_info_add("  ");
-                ui_info_add(file_name);
+                ui_info_add(strrchr(file_name, '/') - 3); // ... hacky
                 ui_info_add(" ... ");
                 import = fopen(file_name, "rb");
                 if (import != NULL) {
@@ -244,12 +245,14 @@ void export_quests() {
     int game = select_game("Select the game to export quests from...", "Selected game...", &extdata, &system, 0);
     if (game == -1)
         return;
-    if (game == 0)
-        extract(system, "quest/jpn", 0);
-    else if (game == 1)
-        extract(system, "quest/eur", 1);
-    else if (game == 2)
-        extract(system, "quest/usa", 1);
+    if (game == 0 && create_path("/3ds/mhx_data_manager/quest/jpn"))
+        extract(system, "/3ds/mhx_data_manager/quest/jpn", 0);
+    else if (game == 1 && create_path("/3ds/mhx_data_manager/quest/eur"))
+        extract(system, "/3ds/mhx_data_manager/quest/eur", 1);
+    else if (game == 2 && create_path("/3ds/mhx_data_manager/quest/usa"))
+        extract(system, "/3ds/mhx_data_manager/quest/usa", 1);
+    else
+        ui_pause("Error: Unable to create output path");
     FSFILE_Close(system);
     FSUSER_CloseArchive(extdata);
 }
@@ -262,11 +265,11 @@ void import_quests() {
     if ((game == -1) || !ui_confirm("Any quest in your save file with the same ID as\nan imported quest will be overwritten. Are you\nsure you want to import quests into this game's\nsave file?\n\n(See bottom screen for selected game)"))
         return;
     if (game == 0)
-        inject(system, "quest/jpn", 0);
+        inject(system, "/3ds/mhx_data_manager/quest/jpn", 0);
     else if (game == 1)
-        inject(system, "quest/eur", 1);
+        inject(system, "/3ds/mhx_data_manager/quest/eur", 1);
     else if (game == 2)
-        inject(system, "quest/usa", 1);
+        inject(system, "/3ds/mhx_data_manager/quest/usa", 1);
     FSFILE_Close(system);
     FSUSER_CloseArchive(extdata);
 }

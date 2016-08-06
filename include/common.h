@@ -18,4 +18,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <3ds.h>
 
 int select_game(const char* description, const char* info, FS_Archive* extdata, Handle* system, int allow_write);
+int create_path(char* path);
 

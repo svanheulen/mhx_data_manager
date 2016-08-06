@@ -51,14 +51,20 @@ void backup_save() {
     FSFILE_Close(system);
     FSUSER_CloseArchive(extdata);
     ui_info_add("\x1b[32;1msuccess.\x1b[0m\n");
+    if (!create_path("/3ds/mhx_data_manager/save")) {
+        free(system_data);
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to create output path");
+        return;
+    }
     ui_info_add("Writing backup save file ... ");
     FILE* backup = NULL;
     if (game == 0)
-        backup = fopen("save/system_jpn.bin", "wb");
+        backup = fopen("/3ds/mhx_data_manager/save/system_jpn.bin", "wb");
     else if (game == 1)
-        backup = fopen("save/system_eur.bin", "wb");
+        backup = fopen("/3ds/mhx_data_manager/save/system_eur.bin", "wb");
     else if (game == 2)
-        backup = fopen("save/system_usa.bin", "wb");
+        backup = fopen("/3ds/mhx_data_manager/save/system_usa.bin", "wb");
     if (backup == NULL) {
         free(system_data);
         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
@@ -85,11 +91,11 @@ void restore_save() {
     ui_info_add("Reading backup save file ... ");
     FILE* backup = NULL;
     if (game == 0)
-        backup = fopen("save/system_jpn.bin", "rb");
+        backup = fopen("/3ds/mhx_data_manager/save/system_jpn.bin", "rb");
     else if (game == 1)
-        backup = fopen("save/system_eur.bin", "rb");
+        backup = fopen("/3ds/mhx_data_manager/save/system_eur.bin", "rb");
     else if (game == 2)
-        backup = fopen("save/system_usa.bin", "rb");
+        backup = fopen("/3ds/mhx_data_manager/save/system_usa.bin", "rb");
     if (backup == NULL) {
         FSFILE_Close(system);
         FSUSER_CloseArchive(extdata);

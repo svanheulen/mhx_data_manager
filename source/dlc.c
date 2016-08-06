@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <mbedtls/sha256.h>
 #include <stdio.h>
 #include <string.h>
+#include "common.h"
 #include "ui.h"
 
 static Handle frdu_handle = 0;
@@ -289,20 +290,22 @@ void get_encryption_keys() {
     char post_data[0x135];
     char common_key[16];
     memset(post_data, 0, 0x135);
-    if (initialize_post_data(post_data, common_key)) {
+    if (!create_path("/3ds/mhx_data_manager/key")) {
+        ui_pause("Error: Unable to create output path");
+    } else if (initialize_post_data(post_data, common_key)) {
         char response[0x200];
         ui_info_add("Getting JPN key ... \n");
         int response_len = request_key(post_data, common_key, 2, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_jp.cgi", response, 0x200);
         if (response_len != 0 && verify_response(response, response_len, common_key))
-            log_response(response, response_len, common_key, 2, "key/jpn.log");
+            log_response(response, response_len, common_key, 2, "/3ds/mhx_data_manager/key/jpn.log");
         ui_info_add("Complete.\nGetting EUR key ... \n");
         response_len = request_key(post_data, common_key, 3, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_eu.cgi", response, 0x200);
         if (response_len != 0 && verify_response(response, response_len, common_key))
-            log_response(response, response_len, common_key, 3, "key/eur.log");
+            log_response(response, response_len, common_key, 3, "/3ds/mhx_data_manager/key/eur.log");
         ui_info_add("Complete.\nGetting USA key ... \n");
         response_len = request_key(post_data, common_key, 3, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_us.cgi", response, 0x200);
         if (response_len != 0 && verify_response(response, response_len, common_key))
-            log_response(response, response_len, common_key, 3, "key/usa.log");
+            log_response(response, response_len, common_key, 3, "/3ds/mhx_data_manager/key/usa.log");
         ui_info_add("Complete.\n");
     }
 }

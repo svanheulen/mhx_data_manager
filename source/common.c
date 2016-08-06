@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <3ds.h>
+#include <string.h>
+#include <sys/stat.h>
 #include "ui.h"
 
 int select_game(const char* description, const char* info, FS_Archive* extdata, Handle* system, int allow_write) {
@@ -50,5 +52,25 @@ int select_game(const char* description, const char* info, FS_Archive* extdata, 
     ui_info_add(game_menu[game].text);
     ui_info_add("\n");
     return game;
+}
+
+int create_path(const char* path) {
+    char temp_path[0x100];
+    strcpy(temp_path, path);
+    char new_path[0x100] = {0};
+    char* path_part = strtok(temp_path, "/");
+    while (path_part != NULL) {
+        strcat(new_path, "/");
+        strcat(new_path, path_part);
+        struct stat path_info;
+        if (stat(new_path, &path_info) == 0) {
+            if (!S_ISDIR(path_info.st_mode))
+                return 0;
+        } else {
+            mkdir(new_path, 0777);
+        }
+        path_part = strtok(NULL, "/");
+    }
+    return 1;
 }
 
