@@ -169,6 +169,7 @@ $(TOPDIR)/banner.bnr :	$(TOPDIR)/meta/banner.png $(TOPDIR)/meta/banner.wav
 
 $(OUTPUT).cia	:	$(OUTPUT).elf $(TOPDIR)/icon.icn $(TOPDIR)/banner.bnr
 	@makerom -f cia -o "$@" -elf $(OUTPUT).elf -rsf $(TOPDIR)/meta/cia.rsf -icon $(TOPDIR)/icon.icn -banner $(TOPDIR)/banner.bnr -exefslogo
+	@echo built ... $(notdir $@)
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
