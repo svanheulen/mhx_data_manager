@@ -100,7 +100,7 @@ Result frduGetServiceLocatorData(void* buffer) {
     return command_buffer[1];
 }
 
-int initialize_post_data(char* post_data, char* common_key) {
+int initialize_post_data(char* post_data, char* common_key, int stories) {
     ui_info_add("Requesting auth token ... ");
     Handle event;
     if (svcCreateEvent(&event, 0) != 0) {
@@ -126,7 +126,10 @@ int initialize_post_data(char* post_data, char* common_key) {
     } else if (svcClearEvent(event) != 0) {
         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to clear event");
-    } else if (frduRequestServiceLocator(&event, 0x155400, "ffa2340f", "0000", 0, 0) != 0) {
+    } else if (stories == 0 && frduRequestServiceLocator(&event, 0x155400, "ffa2340f", "0000", 0, 0) != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to request service locator");
+    } else if (stories == 1 && frduRequestServiceLocator(&event, 0x16e100, "9ec4521b", "0000", 0, 0) != 0) {
         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to request service locator");
     } else if (svcWaitSynchronization(event, -1) != 0) {
@@ -138,7 +141,10 @@ int initialize_post_data(char* post_data, char* common_key) {
     } else {
         post_data[1] = strlen(buffer + 0x88);
         strncpy(post_data + 2, buffer + 0x88, 0x100);
-        post_data[post_data[1] + 5] = 1;
+        if (stories == 0)
+            post_data[post_data[1] + 5] = 1;
+        else
+            post_data[post_data[1] + 5] = 2;
         s64 client_nonce = svcGetSystemTick();
         common_key[0] = common_key[12] = ((char*) &friend_key)[3];
         common_key[1] = common_key[13] = ((char*) &friend_key)[2];
@@ -156,7 +162,7 @@ int initialize_post_data(char* post_data, char* common_key) {
     return ret;
 }
 
-int request_key(char* post_data, char* common_key, char version, char* url, char* response, int response_size) {
+int request_key(char* post_data, char* common_key, char version, char* url, char* response, int response_size, int stories) {
     ui_info_add("  Sending request ... ");
     post_data[0] = version;
     unsigned char hmac_key[32];
@@ -179,7 +185,10 @@ int request_key(char* post_data, char* common_key, char version, char* url, char
     if (httpcSetSSLOpt(&context, SSLCOPT_DisableVerify) != 0) {
         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to set SSL option");
-    } else if (httpcAddRequestHeaderField(&context, "User-Agent", "Capcom Browser Services for MonsterHunter_X") != 0) {
+    } else if (stories == 0 && httpcAddRequestHeaderField(&context, "User-Agent", "Capcom Browser Services for MonsterHunter_X") != 0) {
+        ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
+        ui_pause("Error: Unable to add HTTP header");
+    } else if (stories == 1 && httpcAddRequestHeaderField(&context, "User-Agent", "Capcom Browser Services for MonsterHunter_SS") != 0) {
         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
         ui_pause("Error: Unable to add HTTP header");
     } else if (httpcAddPostDataRaw(&context, (u32*) post_data, post_data[1] + 53) != 0) {
@@ -292,21 +301,31 @@ void get_encryption_keys() {
     memset(post_data, 0, 0x135);
     if (!create_path("/3ds/mhx_data_manager/key")) {
         ui_pause("Error: Unable to create output path");
-    } else if (initialize_post_data(post_data, common_key)) {
-        char response[0x200];
-        ui_info_add("Getting JPN key ... \n");
-        int response_len = request_key(post_data, common_key, 2, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_jp.cgi", response, 0x200);
-        if (response_len != 0 && verify_response(response, response_len, common_key))
-            log_response(response, response_len, common_key, 2, "/3ds/mhx_data_manager/key/jpn.log");
-        ui_info_add("Complete.\nGetting EUR key ... \n");
-        response_len = request_key(post_data, common_key, 3, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_eu.cgi", response, 0x200);
-        if (response_len != 0 && verify_response(response, response_len, common_key))
-            log_response(response, response_len, common_key, 3, "/3ds/mhx_data_manager/key/eur.log");
-        ui_info_add("Complete.\nGetting USA key ... \n");
-        response_len = request_key(post_data, common_key, 3, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_us.cgi", response, 0x200);
-        if (response_len != 0 && verify_response(response, response_len, common_key))
-            log_response(response, response_len, common_key, 3, "/3ds/mhx_data_manager/key/usa.log");
-        ui_info_add("Complete.\n");
+    } else {
+        if (initialize_post_data(post_data, common_key, 0)) {
+            char response[0x200];
+            ui_info_add("Getting MHX JPN key ... \n");
+            int response_len = request_key(post_data, common_key, 2, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_jp.cgi", response, 0x200, 0);
+            if (response_len != 0 && verify_response(response, response_len, common_key))
+                log_response(response, response_len, common_key, 2, "/3ds/mhx_data_manager/key/jpn.log");
+            ui_info_add("Complete.\nGetting MHGen EUR key ... \n");
+            response_len = request_key(post_data, common_key, 3, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_eu.cgi", response, 0x200, 0);
+            if (response_len != 0 && verify_response(response, response_len, common_key))
+                log_response(response, response_len, common_key, 3, "/3ds/mhx_data_manager/key/eur.log");
+            ui_info_add("Complete.\nGetting MHGen USA key ... \n");
+            response_len = request_key(post_data, common_key, 3, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_us.cgi", response, 0x200, 0);
+            if (response_len != 0 && verify_response(response, response_len, common_key))
+                log_response(response, response_len, common_key, 3, "/3ds/mhx_data_manager/key/usa.log");
+            ui_info_add("Complete.\n");
+        }
+        if (initialize_post_data(post_data, common_key, 1)) {
+            char response[0x200];
+            ui_info_add("Getting MHStories JPN key ... \n");
+            int response_len = request_key(post_data, common_key, 3, "https://voodoo.capcom.co.jp/SSL/3ds/mhss/login.cgi", response, 0x200, 1);
+            if (response_len != 0 && verify_response(response, response_len, common_key))
+                log_response(response, response_len, common_key, 3, "/3ds/mhx_data_manager/key/stories.log");
+            ui_info_add("Complete.\n");
+        }
     }
 }
 

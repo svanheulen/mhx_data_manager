@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
         {"Get Encryption Keys", 1},
     };
     while (aptMainLoop()) {
-        int task = ui_menu("\x1b[32;1mMonster Hunter X Data Manager (v2.1.1)\n\n\x1b[31;1mAlways keep a good backup of your save file!\x1b[0m\n\nSelect a task...", main_menu, 8);
+        int task = ui_menu("\x1b[32;1mMonster Hunter X Data Manager (v2.2.0)\n\n\x1b[31;1mAlways keep a good backup of your save file!\x1b[0m\n\nSelect a task...", main_menu, 8);
         if (task == 0)
             copy_character();
         else if (task == 1)
