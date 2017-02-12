@@ -305,9 +305,9 @@ void get_encryption_keys() {
         if (initialize_post_data(post_data, common_key, 0)) {
             char response[0x200];
             ui_info_add("Getting MHX JPN key ... \n");
-            int response_len = request_key(post_data, common_key, 2, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_jp.cgi", response, 0x200, 0);
+            int response_len = request_key(post_data, common_key, 3, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_new_jp.cgi", response, 0x200, 0);
             if (response_len != 0 && verify_response(response, response_len, common_key))
-                log_response(response, response_len, common_key, 2, "/3ds/mhx_data_manager/key/jpn.log");
+                log_response(response, response_len, common_key, 3, "/3ds/mhx_data_manager/key/jpn.log");
             ui_info_add("Complete.\nGetting MHGen EUR key ... \n");
             response_len = request_key(post_data, common_key, 3, "https://spector.capcom.co.jp/SSL/3ds/mhx/login_eu.cgi", response, 0x200, 0);
             if (response_len != 0 && verify_response(response, response_len, common_key))
