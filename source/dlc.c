@@ -251,6 +251,9 @@ void log_response(char* response, int response_len, char* common_key, char versi
     char* end = strchr(buffer, 8);
     if (end != NULL)
         *end = 0;
+    end = strchr(buffer, 0x10);
+    if (end != NULL)
+        *end = 0;
     FILE* log = fopen(log_file, "w");
     if (log == NULL) {
         ui_info_add("\x1b[31;1mfailure.\x1b[0m\n");
