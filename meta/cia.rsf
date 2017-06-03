@@ -219,7 +219,6 @@ AccessControlInfo:
    - cfg:u
    - csnd:SND
    - dsp::DSP
-   - frd:u
    - fs:USER
    - gsp::Gpu
    - gsp::Lcd

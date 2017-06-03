@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "character.h"
 #include "quest.h"
 #include "save.h"
-#include "dlc.h"
 #include "ui.h"
 
 int main(int argc, char* argv[]) {
@@ -33,10 +32,9 @@ int main(int argc, char* argv[]) {
         {"Delete Quests", 1},
         {"Backup Save", 1},
         {"Restore Save", 1},
-        {"Get Encryption Keys", 1},
     };
     while (aptMainLoop()) {
-        int task = ui_menu("\x1b[32;1mMonster Hunter X Data Manager (v2.2.2)\n\n\x1b[31;1mAlways keep a good backup of your save file!\x1b[0m\n\nSelect a task...", main_menu, 8);
+        int task = ui_menu("\x1b[32;1mMonster Hunter X Data Manager (v2.3.0)\n\n\x1b[31;1mAlways keep a good backup of your save file!\x1b[0m\n\nSelect a task...", main_menu, 7);
         if (task == 0)
             copy_character();
         else if (task == 1)
@@ -51,8 +49,6 @@ int main(int argc, char* argv[]) {
             backup_save();
         else if (task == 6)
             restore_save();
-        else if (task == 7)
-            get_encryption_keys();
         else
             break;
     }
